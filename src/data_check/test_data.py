@@ -42,7 +42,7 @@ def test_neighborhood_names(data: pd.DataFrame) -> None:
     """
     known_names = ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"]
 
-    neigh = set(data['neighbourhood_group'].unique())
+    neigh = set(data["neighbourhood_group"].unique())
 
     # Unordered check
     assert set(known_names) == set(neigh)
@@ -52,12 +52,14 @@ def test_proper_boundaries(data: pd.DataFrame):
     """
     Test proper longitude and latitude boundaries for properties in and around NYC
     """
-    idx = data['longitude'].between(-74.25, -73.50) & data['latitude'].between(40.5, 41.2)
+    idx = data["longitude"].between(-74.25, -73.50) & data["latitude"].between(40.5, 41.2)
 
     assert np.sum(~idx) == 0
 
 
-def test_similar_neigh_distrib(data: pd.DataFrame, ref_data: pd.DataFrame, kl_threshold: float) -> None:
+def test_similar_neigh_distrib(
+    data: pd.DataFrame, ref_data: pd.DataFrame, kl_threshold: float
+) -> None:
     """
     Apply a threshold on the KL divergence to detect if the distribution of the new data is
     significantly different than that of the reference dataset
@@ -70,16 +72,13 @@ def test_similar_neigh_distrib(data: pd.DataFrame, ref_data: pd.DataFrame, kl_th
     Raises:
         AssertionError: If KL divergence exceeds the threshold
     """
-    # Use newer pandas value_counts with normalize=True for probability distribution
-    dist1 = data['neighbourhood_group'].value_counts(normalize=True).sort_index()
-    dist2 = ref_data['neighbourhood_group'].value_counts(normalize=True).sort_index()
-    
-    # Ensure distributions sum to 1 and have matching indices
+    dist1 = data["neighbourhood_group"].value_counts(normalize=True).sort_index()
+    dist2 = ref_data["neighbourhood_group"].value_counts(normalize=True).sort_index()
+
     assert np.isclose(dist1.sum(), 1.0)
     assert np.isclose(dist2.sum(), 1.0)
     assert dist1.index.equals(dist2.index)
 
-    # Calculate KL divergence with improved numerical stability
     kl_div = scipy.stats.entropy(dist1, dist2, base=2)
     assert np.isfinite(kl_div) and kl_div < kl_threshold
 
@@ -87,3 +86,10 @@ def test_similar_neigh_distrib(data: pd.DataFrame, ref_data: pd.DataFrame, kl_th
 ########################################################
 # Implement here test_row_count and test_price_range   #
 ########################################################
+
+def test_row_count(data: pd.DataFrame) -> None:
+    assert 15000 < data.shape[0] < 1000000
+
+
+def test_price_range(data: pd.DataFrame, min_price: float, max_price: float) -> None:
+    assert data["price"].between(min_price, max_price).all()
